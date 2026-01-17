@@ -6,6 +6,10 @@ let score = 0, lives = 3, gameOver = false;
 let fishTimer = 0, trashTimer = 0;
 let gameStarted = false; 
 let isPaused = false;
+// Versucht, einen gespeicherten Score zu laden. Wenn keiner da ist, nimm 0.
+let highScore = localStorage.getItem('cyberHaiHighScore') || 0;
+// Zeigt den Highscore sofort beim Start an
+document.getElementById('highScore').innerText = highScore;
 const fishes = [], trash = [];
 
 const player = {
@@ -118,12 +122,18 @@ function rectsOverlap(a,b){
 function update(dt){
   if(gameOver || !gameStarted || isPaused) return;
 
+  // Highscore Check
+  if (score > highScore) {
+      highScore = score;
+      localStorage.setItem('cyberHaiHighScore', highScore); 
+      document.getElementById('highScore').innerText = highScore;
+  }  
+
   // player movement
   player.y += player.vy * dt; 
   if(player.y < 0) player.y = 0; if(player.y + player.h > H) player.y = H - player.h;
 
   player.x += player.vx * dt;
-  // Begrenzung: Nicht links raus und nicht rechts raus schwimmen
   if(player.x < 0) player.x = 0; 
   if(player.x + player.w > W) player.x = W - player.w;
 
@@ -144,7 +154,15 @@ function update(dt){
   for(let i=trash.length-1;i>=0;i--){
     const t = trash[i]; t.x -= t.speed * dt;
     if(t.x + t.w < 0) trash.splice(i,1);
-    else if(rectsOverlap(player,t)) { lives -= 1; trash.splice(i,1); updateHUD(); if(lives <= 0) doGameOver(); }
+    else if(rectsOverlap(player,t)) { 
+        lives -= 1; 
+        trash.splice(i,1); 
+        updateHUD(); 
+        
+        if (lives <= 0 && !gameOver) {
+            doGameOver(); 
+        }
+    }
   }
 }
 
