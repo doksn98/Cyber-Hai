@@ -16,7 +16,7 @@ const player = {
   x: 60, y: H/2 - 40, w: 140, h: 80, speed: 300, vy: 0, vx: 0 
 };
 
-//  Müll-Bilder GLOBAL laden (nicht in einer if-Abfrage) ---
+//  Müll-Bilder GLOBAL laden ---
 const trashImages = {
     Reifen: new Image(),
     Dose: new Image(),
@@ -179,24 +179,22 @@ function draw(){
   }
   // ----------------------------------
   
-// Fisch-Bild zeichnen
-  for(const f of fishes){
-    // Prüfen, ob das Bild geladen ist
-    if (f.img && f.img.complete && f.img.naturalWidth > 0) {
-        ctx.save();
-        ctx.shadowColor = '#ff9fbf'; 
-        ctx.shadowBlur = 8;
-        // Fisch spiegeln, damit er nach links schwimmt
-        ctx.translate(f.x + f.w, f.y);
-        ctx.scale(-1, 1);
-        ctx.drawImage(f.img, 0, 0, f.w, f.h);
-        ctx.restore();
-    } else {
-        // Fallback: Rosa Rechteck, falls Bild nicht lädt
-        ctx.fillStyle = '#ff9fbf';
-        ctx.fillRect(f.x, f.y, f.w, f.h);
-    }
+// Fisch-Bild zeichnen 
+for(const f of fishes){
+  if (f.img && f.img.complete && f.img.naturalWidth > 0) {
+      ctx.save();
+      ctx.shadowColor = '#ff9fbf'; 
+      ctx.shadowBlur = 8;
+      
+      // Einfach normal zeichnen, da das Bild schon passt
+      ctx.drawImage(f.img, f.x, f.y, f.w, f.h);
+      
+      ctx.restore();
+  } else {
+      ctx.fillStyle = '#ff9fbf';
+      ctx.fillRect(f.x, f.y, f.w, f.h);
   }
+}
 
  // Draw trash (Dosen/Müll) 
   for (const t of trash) {
@@ -283,11 +281,13 @@ function updateHUD(){
 
 
 
-function doGameOver(){
+function doGameOver() {
   gameOver = true;
   document.getElementById('overlay').classList.remove('hidden');
   document.getElementById('overlayScore').textContent = `Punkte: ${score}`;
   document.getElementById('overlayTitle').textContent = 'Game Over';
+  showHighScores();      // Zeigt die aktuelle Tabelle
+  checkHighScore(score); // Prüft, ob das Eingabefeld erscheinen soll
 }
 
 // Controls
@@ -323,10 +323,17 @@ function showStartScreen() {
   const overlay = document.getElementById('overlay');
   overlay.classList.remove('hidden');
   
-  document.getElementById('overlayTitle').textContent = 'Cyber Hai - Projekt von Dogukan Salik :)'; 
+  document.getElementById('overlayTitle').textContent = 'Cyber Hai'; 
   document.getElementById('overlayScore').textContent = 'Beliebige Taste drücken zum Start';
+  
+  // Das Eingabefeld verstecken
+  document.getElementById('newHighScoreEntry').classList.add('hidden');
+  
+  showHighScores();
+
   document.getElementById('restartBtn').style.display = 'none'; 
 }
+
 
 // Main loop
 let last = performance.now();
@@ -336,6 +343,68 @@ function loop(t){
   update(dt); draw();
   requestAnimationFrame(loop);
 }
+
+// Globale Highscore Liste laden
+const NO_OF_HIGH_SCORES = 5;
+const HIGH_SCORES = 'highScores';
+const highScoreString = localStorage.getItem(HIGH_SCORES);
+const highScores = JSON.parse(highScoreString) || [];
+
+function showHighScores() {
+  const list = document.getElementById('highScoreList');
+  list.innerHTML = highScores
+    .map(score => `<li><span>${score.name}</span> <span>${score.score}</span></li>`)
+    .join('');
+}
+
+function checkHighScore(accountScore) {
+  const lowestScore = highScores[NO_OF_HIGH_SCORES - 1]?.score ?? 0;
+
+  if (accountScore > lowestScore || highScores.length < NO_OF_HIGH_SCORES) {
+    // Erzwingt das Anzeigen des Eingabefeldes
+    document.getElementById('newHighScoreEntry').style.display = 'block'; 
+    document.getElementById('newHighScoreEntry').classList.remove('hidden'); // Zur Sicherheit
+    
+    // Versteckt den Neustart-Button
+    document.getElementById('restartBtn').style.display = 'none'; 
+  } else {
+    // Versteckt das Eingabefeld
+    document.getElementById('newHighScoreEntry').style.display = 'none';
+    
+    // Zeigt den Neustart-Button
+    document.getElementById('restartBtn').style.display = 'inline-block';
+  }
+}
+
+function saveHighScore(score, highScores) {
+  const name = document.getElementById('playerName').value || 'Unbekannt';
+  const newScore = { score, name };
+  
+  // 1. Hinzufügen
+  highScores.push(newScore);
+  // 2. Sortieren (höchste zuerst)
+  highScores.sort((a, b) => b.score - a.score);
+  // 3. Auf Top 5 kürzen
+  highScores.splice(NO_OF_HIGH_SCORES);
+  
+  // 4. Speichern und Update
+  localStorage.setItem(HIGH_SCORES, JSON.stringify(highScores));
+  showHighScores();
+  
+  // UI zurücksetzen
+  document.getElementById('newHighScoreEntry').classList.add('hidden');
+  document.getElementById('restartBtn').classList.remove('hidden');
+  document.getElementById('restartBtn').style.display = 'inline-block';
+}
+
+// Event Listener für den Speicher-Button
+document.getElementById('saveScoreBtn').addEventListener('click', () => {
+  saveHighScore(score, highScores);
+});
+  
+  showHighScores(); // Liste anzeigen
+  checkHighScore(score); // Prüfen ob wir in die Top 5 kommen
+
 
 // Init
 showStartScreen(); // Startbildschirm zeigen statt direkt resetGame
