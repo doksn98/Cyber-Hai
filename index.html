@@ -18,11 +18,20 @@
   <canvas id="gameCanvas" width="1500" height="700"></canvas>
 
   <div id="overlay" class="hidden">
-    <div id="overlayBox">
-      <h1 id="overlayTitle">Game Over</h1>
-      <p id="overlayScore">Punkte: 0</p>
-      <button id="restartBtn">Neustarten</button>
-    </div>
+    <div id="gameCredits">Projekt von Dogukan Salik</div>
+<div id="overlayBox">
+  <h1 id="overlayTitle">Game Over</h1>
+  <p id="overlayScore">Punkte: 0</p>
+  
+  <div id="newHighScoreEntry" class="hidden">
+    <input type="text" id="playerName" placeholder="Dein Name" maxlength="10">
+    <button id="saveScoreBtn">Speichern</button>
+  </div>
+  <h3>Top 5 Highscores</h3>
+  <ul id="highScoreList"></ul>
+
+  <button id="restartBtn">Neustarten</button>
+</div>
   </div>
 
   <script src="main.js"></script>
